@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Technical Specification Document</title>
+</head>
+<body>
+    <h1>Technical Specification Document</h1>
+
+    <h3>Title</h3>
+    <p>Staking Rewards Contract</p>
+
+    <h3>Version</h3>
+    <p>2.0</p>
+
+    <h3>Author</h3>
+    <p>DeFi Spot</p>
+
+    <h3>Date</h3>
+    <p>19-06-2024</p>
+
+    <h3>Overview</h3>
+    <p>This contract handles staking, reward distribution, and withdrawal requests for stakers.</p>
+
+    <h3>Compiler Version</h3>
+    <p>0.8.24</p>
+
+    <h3>License</h3>
+    <p>MIT</p>
+
+    <h3>Imports</h3>
+    <ul>
+        <li>@openzeppelin/contracts/utils/math/Math.sol</li>
+        <li>@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol</li>
+        <li>@openzeppelin/contracts/interfaces/IERC20.sol</li>
+        <li>@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol</li>
+        <li>@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol</li>
+    </ul>
+
+    <h3>Libraries</h3>
+    <ul>
+        <li>SafeERC20</li>
+    </ul>
+
+    <h3>Access Control</h3>
+    <ul>
+        <li>PARAMS_SETTER_ROLE: Role for setting parameters</li>
+        <li>REWARDS_DISTRIBUTOR_ROLE: Role for distributing rewards</li>
+    </ul>
+
+    <h3>State Variables</h3>
+
+    <h4>Constants</h4>
+    <ul>
+        <li><code>DECIMAL_PRECISION</code>: Precision factor for decimal calculations, set to <code>1e18</code>.</li>
+        <li><code>MAX_TOKEN_REWARD_RATE</code>: Maximum token reward rate, set to <code>1e18 * 2</code>.</li>
+        <li><code>MAX_PENALTY_DAYS</code>: Maximum number of penalty days, set to <code>90</code>.</li>
+        <li><code>MIN_WITHDRAW_WAIT_TIME</code>: Minimum withdrawal wait time, set to <code>1 day</code>.</li>
+        <li><code>MAX_WITHDRAW_WAIT_TIME</code>: Maximum withdrawal wait time, set to <code>10 days</code>.</li>
+        <li><code>PENALTY_DAYS_TIMELOCK</code>: Time the owner has to wait to apply new penalty days, set to <code>5 days</code>.</li>
+        <li><code>PENALTY_DAYS_TIMELOCK_BUFFER</code>: Time available for the owner to apply new penalty days value after the timelock has passed, set to <code>5 days</code>.</li>
+        <li><code>WITHDRAWAL_WAIT_TIMELOCK</code>: Time the owner has to wait to apply new withdrawal time, set to <code>MAX_WITHDRAW_WAIT_TIME * 2</code>.</li>
+        <li><code>WITHDRAWAL_WAIT_TIMELOCK_BUFFER</code>: Time available for the owner to apply new withdrawal time value after the timelock has passed, set to <code>5 days</code>.</li>
+    </ul>
+
+    <h4>Access Control</h4>
+    <ul>
+        <li><code>PARAMS_SETTER_ROLE</code>: Role for setting parameters, identified by <code>keccak256("PARAMS_SETTER_ROLE")</code>.</li>
+        <li><code>REWARDS_DISTRIBUTOR_ROLE</code>: Role for distributing rewards, identified by <code>keccak256("REWARDS_DISTRIBUTOR_ROLE")</code>.</li>
+    </ul>
+
+    <h4>Timelock Requests</h4>
+    <ul>
+        <li><code>withdrawalWaitTimeRequest</code>: Timelock request to update the withdrawal wait time, of type <code>PendingRequest</code>.</li>
+        <li><code>penaltyDaysRequest</code>: Timelock request to update the penalty days amount, of type <code>PendingRequest</code>.</li>
+    </ul>
+
+    <h4>Token Contracts</h4>
+    <ul>
+        <li><code>SPOT</code>: The token to be staked, of type <code>IERC20</code>.</li>
+        <li><code>USDT</code>: The reward token, of type <code>IERC20</code>.</li>
+    </ul>
+
+    <h4>Addresses</h4>
+    <ul>
+        <li><code>penaltyFeesCollector</code>: The address to collect penalty fees.</li>
+    </ul>
+
+    <h4>Staking</h4>
+    <ul>
+        <li><code>userStakingTimestamp</code>: Mapping of user addresses to the timestamp of when they staked.</li>
+        <li><code>readyToWithdraw</code>: Mapping of user addresses to their withdrawal requests.</li>
+        <li><code>balances</code>: Mapping of user addresses to their staked amounts.</li>
+        <li><code>totalStakedTokens</code>: The total amount of staked tokens, of type <code>uint256</code>.</li>
+        <li><code>tokenRewardBalance</code>: Amount of undistributed rewards in the contract.</li>
+        <li><code>lastTimeTokenRewardUpdated</code>: Timestamp of the last time the token rewards were updated.</li>
+        <li><code>tokenRewardOdometer</code>: The total amount of accrued rewards per staked token.</li>
+        <li><code>allEarnedTokenReward</code>: Total SPOT allocated for stakers.</li>
+        <li><code>allTokenRewardPaid</code>: Total token rewards transferred to stakers.</li>
+        <li><code>tokenRewardPerSecond</code>: Amount of SPOT tokens to be globally distributed per second.</li>
+    </ul>
+
+    <h4>Revenue Rewards</h4>
+    <ul>
+        <li><code>revenueRewardPerSecond</code>: Revenue rewards to airdrop every second, derived from amount and time.</li>
+        <li><code>lastTimeRevenueRewardUpdated</code>: Unix timestamp indicating the last time the revenue reward was updated.</li>
+        <li><code>revenueRewardPeriodEndTime</code>: Unix timestamp for when the current revenue reward period ends.</li>
+        <li><code>revenueRewardOdometer</code>: The total amount of accrued rewards per staked token.</li>
+        <li><code>allRevenueRewardIn</code>: All the revenue reward added to the contract.</li>
+        <li><code>allRevenueRewardOut</code>: All revenue reward paid out to users.</li>
+    </ul>
+
+    <h4>User Rewards</h4>
+    <ul>
+      <li><code>userRevenueRewardOdometer</code>: Mapping of user addresses to their total amount of accrued revenue rewards per staked token.</li>
+      <li><code>allUserRewards</code>: Mapping of user addresses to their total rewards.</li>
+      <li><code>revenueRewardsToPayout</code>: Mapping of user addresses to their revenue rewards to be paid out since the last payout.</li>
+      <li><code>userTokenRewardOdometer</code>: Mapping of user addresses to their total amount of accrued token rewards per staked token.</li>
+      <li><code>tokenRewardsToPayout</code>: Mapping of user addresses to their new rewards to be paid out since the last payout.</li>
+    </ul>
+
+
+    <h4>Withdrawal and Penalty</h4>
+    <ul>
+        <li><code>withdrawWaitTime</code>: Time to wait to withdraw the staked amounts.</li>
+        <li><code>penaltyFeesCollected</code>: Penalty fees collected by the contract.</li>
+        <li><code>penaltyDays</code>: Amount of days the user has to wait to withdraw without penalty.</li>
+    </ul>
+
+    <h4>Miscellaneous</h4>
+    <ul>
+        <li><code>BLOCK_TIME_LENGTH</code>: Block production time in seconds (e.g., 12 on Ethereum mainnet).</li>
+    </ul>
+
+    <h3>Events</h3>
+    <ul>
+        <li>LogRevenueRewardAdded(uint256 reward, uint256 rewardsDuration)</li>
+        <li>LogStaked(address indexed user, uint256 amount)</li>
+        <li>LogWithdrawn(address indexed user, uint256 amountToWithdraw, uint256 penaltyAmount)</li>
+        <li>LogWithdrawRequested(address indexed user, uint256 amount)</li>
+        <li>LogRewardPaid(address indexed user, uint256 revenueReward, uint256 tokenReward)</li>
+        <li>LogPenaltiesWithdrawn(address indexed user, uint256 penaltyFeesCollected)</li>
+        <li>LogPenaltyDaysUpdated(uint256 _days)</li>
+        <li>LogAddTokenReward(uint256 amount)</li>
+        <li>LogWithdrawWaitTimeUpdated(uint256 time)</li>
+        <li>LogTokenRewardRateUpdated(uint256 rate)</li>
+        <li>LogWithdrawalCancelled(address indexed user, uint256 amount)</li>
+        <li>LogPenaltyDaysRequested(uint256 _days)</li>
+        <li>LogWithdrawWaitTimeRequested(uint256 _timeInSeconds)</li>
+        <li>LogUnallocatedStakeTokenRewardsWithdrawn(uint256 amount)</li>
+    </ul>
+
+    <h3>Errors</h3>
+    <ul>
+        <li>StakingRewards__NoZeroAddress</li>
+        <li>StakingRewards__NoZeroAmount</li>
+        <li>StakingRewards__NotEnoughBalance</li>
+        <li>StakingRewards__WithdrawRequestPending</li>
+        <li>StakingRewards__NoWithdrawRequestPending</li>
+        <li>StakingRewards__NoAmountAvailable</li>
+        <li>StakingRewards__WithdrawWaitTimeNotReached</li>
+        <li>StakingRewards__NoPenaltyFeeToCollect</li>
+        <li>StakingRewards__PenaltyDaysTooHigh</li>
+        <li>StakingRewards__WaitTimeLessThanOneDay</li>
+        <li>StakingRewards__WaitTimeMoreThanTenDays</li>
+        <li>StakingRewards__RewardRateExceedsMaxRate</li>
+        <li>StakingRewars__PenaltyDaysTimelock</li>
+        <li>StakingRewards__WithdrawalWaitTimeTimelock</li>
+        <li>StakingRewards__SameAmountOfDays</li>
+        <li>StakingRewards__SameAmountOfSeconds</li>
+        <li>StakingRewards__NoActiveRequest</li>
+        <li>StakingRewards__TimelockBufferExceeded</li>
+        <li>StakingRewards__NoZeroRewardDuration</li>
+    </ul>
+
+    <h3>Functions</h3>
+
+    <br><h4>Function: initialize</h4>
+    <p><strong>Description:</strong> Initializes the contract with the given parameters.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_penaltyFeesCollector</code>: The address that will collect penalty fees.</li>
+        <li><code>_spotAddress</code>: The address of the SPOT token contract.</li>
+        <li><code>_usdt</code>: The address of the USDT token contract.</li>
+        <li><code>_paramsSetter</code>: The address which controls the setting of restricted parameters.</li>
+        <li><code>_rewardsDistributor</code>: The address in charge of setting rewards.</li>
+    </ul>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li><code>_penaltyFeesCollector</code> cannot be the zero address.</li>
+        <li><code>_spotAddress</code> cannot be the zero address.</li>
+        <li><code>_usdt</code> cannot be the zero address.</li>
+        <li><code>_paramsSetter</code> cannot be the zero address.</li>
+        <li><code>_rewardsDistributor</code> cannot be the zero address.</li>
+    </ul>
+
+    <br><h4>Function: stake</h4>
+    <p><strong>Description:</strong> Allows a user to stake a certain amount of tokens.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>amount</code>: The amount of tokens to stake.</li>
+    </ul>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogStaked</code> event indicating the address of the staker and the amount staked.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li><code>amount</code> must be greater than 0.</li>
+        <li>The sender must have at least <code>amount</code> tokens to stake.</li>
+    </ul>
+
+    <br><h4>Function: requestToWithdraw</h4>
+    <p><strong>Description:</strong> Submits a request from the staker to withdraw a certain amount from their staked balance.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>amount</code>: The amount of tokens the staker wants to withdraw.</li>
+    </ul>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogWithdrawRequested</code> event indicating the address of the staker and the amount requested for withdrawal.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li><code>amount</code> must be greater than 0.</li>
+        <li>The staker must have at least <code>amount</code> tokens staked.</li>
+        <li>The staker must not have a pending withdrawal request.</li>
+    </ul>
+
+    <br><h4>Function: cancelWithdraw</h4>
+    <p><strong>Description:</strong> Cancels the pending withdrawal request of the staker.</p>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogWithdrawCancelled</code> event indicating the address of the staker and the amount that was requested for withdrawal.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The staker must have a pending withdrawal request.</li>
+    </ul>
+
+    <br><h4>Function: withdraw</h4>
+    <p><strong>Description:</strong> Allows the staker to withdraw their staked tokens after the withdrawal wait time has passed. If the staker withdraws before the penalty days have passed, a penalty is deducted from the withdrawal amount and added to the penalty fees collected by the contract.</p>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogWithdrawn</code> event indicating the address of the staker, the amount withdrawn, and the penalty amount.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The staker must have a pending withdrawal request.</li>
+        <li>The withdrawal wait time must have passed.</li>
+    </ul>
+
+    <br><h4>Function: getReward</h4>
+    <p><strong>Description:</strong> Allows the staker to claim their accrued rewards. The function updates the revenue and token rewards counters for the staker and then transfers the rewards to the staker.</p>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogRewardPaid</code> event indicating the address of the staker, the revenue rewards paid, and the token rewards paid.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The staker must have accrued rewards.</li>
+    </ul>
+
+    <br><h4>Function: applyPenaltyDaysRequest</h4>
+    <p><strong>Description:</strong> Applies the pending request to change the penalty days. This function can only be called by the <code>PARAMS_SETTER_ROLE</code> role.</p>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogPenaltyDaysUpdated</code> event indicating the new penalty days.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>There must be a pending request to change the penalty days.</li>
+        <li>The time to wait in the request must have passed.</li>
+        <li>The time to wait in the request plus the buffer must not have been exceeded.</li>
+    </ul>
+
+    <br><h4>Function: requestToSetPenaltyDays</h4>
+    <p><strong>Description:</strong> Submits a request to change the penalty days. This function can only be called by the <code>PARAMS_SETTER_ROLE</code> role.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_days</code>: The new number of penalty days.</li>
+    </ul>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogPenaltyDaysRequested</code> event indicating the new penalty days requested.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The caller must be the <code>PARAMS_SETTER_ROLE</code> role.</li>
+        <li><code>_days</code> must not be the same as the current penalty days.</li>
+        <li><code>_days</code> must not exceed the maximum penalty days.</li>
+    </ul>
+
+    <br><h4>Function: applyWithdrawWaitTimeRequest</h4>
+    <p><strong>Description:</strong> Applies the pending request to change the withdrawal wait time. This function can only be called by the <code>PARAMS_SETTER_ROLE</code> role.</p>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogWithdrawWaitTimeUpdated</code> event indicating the new withdrawal wait time.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>There must be a pending request to change the withdrawal wait time.</li>
+        <li>The time to wait in the request must have passed.</li>
+        <li>The time to wait in the request plus the buffer must not have been exceeded.</li>
+    </ul>
+
+    <br><h4>Function: requestToSetWithdrawWaitTime</h4>
+    <p><strong>Description:</strong> Submits a request to change the withdrawal wait time. This function can only be called by the <code>PARAMS_SETTER_ROLE</code> role.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_newTimeInSeconds</code>: The new withdrawal wait time in seconds.</li>
+    </ul>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogWithdrawWaitTimeRequested</code> event indicating the new withdrawal wait time requested.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The caller must be the <code>PARAMS_SETTER_ROLE</code> role.</li>
+        <li><code>_newTimeInSeconds</code> must not be the same as the current withdrawal wait time.</li>
+        <li><code>_newTimeInSeconds</code> must not exceed the maximum withdrawal wait time.</li>
+    </ul>
+
+    <br><h4>Function: addTokenReward</h4>
+    <p><strong>Description:</strong> Adds token rewards to the contract. This function can only be called by the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_amount</code>: The amount of tokens to add as rewards.</li>
+    </ul>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogRewardAdded</code> event indicating the amount of tokens added as rewards.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The caller must have the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</li>
+        <li><code>_amount</code> must be greater than 0.</li>
+        <li>The rewards distribution address must have at least <code>_amount</code> tokens.</li>
+    </ul>
+
+    <br><h4>Function: addRevenueReward</h4>
+    <p><strong>Description:</strong> Adds revenue rewards to the contract. This function can only be called by the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_amount</code>: The amount of revenue to add as rewards.</li>
+        <li><code>_rewardsDuration</code>: The duration over which the rewards should be distributed.</li>
+    </ul>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogRevenueRewardAdded</code> event indicating the amount of revenue added as rewards and the duration over which the rewards should be distributed.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The caller must have the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</li>
+        <li><code>_amount</code> must be greater than 0.</li>
+        <li>The rewards distribution address must have at least <code>_amount</code> of revenue.</li>
+    </ul>
+
+    <br><h4>Function: setTokenRewardRate</h4>
+    <p><strong>Description:</strong> Sets the rate of token rewards per second. This function can only be called by the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_tokenRewardRate</code>: The new rate of token rewards per second.</li>
+    </ul>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogTokenRewardRateUpdated</code> event indicating the new rate of token rewards per second.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The caller must have the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</li>
+        <li><code>_tokenRewardRate</code> must not exceed the maximum token reward rate.</li>
+    </ul>
+
+    <br><h4>Function: withdrawAllPenaltyFeesCollected</h4>
+    <p><strong>Description:</strong> Allows the contract owner to withdraw all penalty fees collected by the contract. This function can only be called by the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</p>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogPenaltyFeesCollectedWithdrawn</code> event indicating the address of the contract owner and the amount of penalty fees withdrawn.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The caller must have the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</li>
+        <li>There must be penalty fees collected by the contract.</li>
+    </ul>
+
+    <br><h4>Function: withdrawUnallocatedStakingTokenRewards</h4>
+    <p><strong>Description:</strong> Withdraws the unallocated staking token rewards. This function can only be called by the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</p>
+
+    <h5>Emits:</h5>
+    <p>A <code>LogUnallocatedStakeTokenRewardsWithdrawn</code> event indicating the amount of tokens transferred to the rewards distributor.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The caller must have the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</li>
+        <li>There must be available tokens to reward.</li>
+    </ul>
+    <br><h4>Function: calculateUserTokenRewardForCurrentPeriod</h4>
+    <p><strong>Description:</strong> Calculates the token reward for a user for the current period.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_tokenRewardOdometer</code>: The total amount of accrued rewards per staked token.</li>
+        <li><code>_account</code>: The address of the user.</li>
+    </ul>
+
+    <h5>Returns:</h5>
+    <p>The token reward for the user for the current period.</p>
+
+    <h5>Note:</h5>
+    <p>No reward will be given if all the tokens have been already reserved. This happens when <code>_tokenRewardOdometer</code> and <code>userTokenRewardOdometer[_account]</code> have the same value.</p>
+
+    <br><h4>Function: calculateTotalTokenRewardsEarnedSinceLastTimeUpdated</h4>
+    <p><strong>Description:</strong> Calculates the total token rewards earned since the last time the token rewards were updated.</p>
+
+    <h5>Returns:</h5>
+    <p>The total token rewards earned since the last time the token rewards were updated.</p>
+
+    <br><h4>Function: _updateRevenueReward</h4>
+    <p><strong>Description:</strong> Updates the revenue reward for a user.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_account</code>: The address of the user.</li>
+    </ul>
+
+    <br><h4>Function: _updateTokenReward</h4>
+    <p><strong>Description:</strong> Updates the token reward for a user.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_account</code>: The address of the user.</li>
+    </ul>
+
+    <br><h4>Function: _authorizeUpgrade</h4>
+    <p><strong>Description:</strong> Authorizes an upgrade of the contract.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>newImplementation</code>: The address of the new contract implementation.</li>
+    </ul>
+
+    <h5>Emits:</h5>
+    <p>An <code>UpgradeAuthorized</code> event indicating the address of the new contract implementation.</p>
+
+    <h5>Requirements:</h5>
+    <ul>
+        <li>The caller must have the <code>REWARDS_DISTRIBUTOR_ROLE</code> role.</li>
+    </ul>
+
+    <br><h4>Function: _calculateNewRevenueRewardOdometerAmount</h4>
+    <p><strong>Description:</strong> Calculates the new revenue reward odometer amount.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_lastTimeRevenueRewardApplicable</code>: The last time the revenue reward is applicable.</li>
+    </ul>
+
+    <h5>Returns:</h5>
+    <p>The new revenue reward odometer amount.</p>
+
+    <br><h4>Function: _calculateNewTokenRewardOdometerAmount</h4>
+    <p><strong>Description:</strong> Calculates the new token reward odometer amount.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_availableSpotToReward</code>: The amount of tokens available for rewards.</li>
+        <li><code>_totalTokenRewardsEarnedSinceLastTimeUpdated</code>: The total token rewards earned since the last time the token rewards were updated.</li>
+    </ul>
+
+    <h5>Returns:</h5>
+    <p>The new token reward odometer amount.</p>
+
+    <br><h4>Function: _calculateNewUserRevenueRewardToPayout</h4>
+    <p><strong>Description:</strong> Calculates the new revenue reward to payout for a user.</p>
+
+    <h5>Parameters:</h5>
+    <ul>
+        <li><code>_revenueRewardOdometer</code>: The total amount of accrued rewards per staked token.</li>
+        <li><code>_account</code>: The address of the user.</li>
+    </ul>
+
+    <h5>Returns:</h5>
+    <p>The new revenue reward to payout for the user.</p>
+
+   </body>
+</html>

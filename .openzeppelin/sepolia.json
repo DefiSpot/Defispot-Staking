@@ -1,0 +1,417 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0x4F2aE20f3625a0E4379A90949b83a89Ff9ee9684",
+      "txHash": "0x8972f5fb82dcd7c3a509c7ebe429d75574b1c02d9412deea09b3844fe01edee5",
+      "kind": "uups"
+    }
+  ],
+  "impls": {
+    "229d97d05caaff29b933e7bf06e01b5f5942aa565e161265f61285c7b6651820": {
+      "address": "0x6Fc37c99e9E80ea76D73f2BA3a8dFA5769eEd666",
+      "txHash": "0xa94b345a8ad63de73ed13f223201cb851a019c999d2c186b20fa53f4ea8bec2c",
+      "layout": {
+        "solcVersion": "0.8.24",
+        "storage": [
+          {
+            "label": "withdrawalWaitTimeRequest",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_struct(PendingRequest)4562_storage",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:57"
+          },
+          {
+            "label": "penaltyDaysRequest",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_struct(PendingRequest)4562_storage",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:60"
+          },
+          {
+            "label": "SPOT",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(IERC20)2468",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:63"
+          },
+          {
+            "label": "USDT",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_contract(IERC20)2468",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:66"
+          },
+          {
+            "label": "penaltyFeesCollector",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_address",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:69"
+          },
+          {
+            "label": "totalStakedTokens",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:72"
+          },
+          {
+            "label": "revenueRewardPerSecond",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:76"
+          },
+          {
+            "label": "lastTimeRevenueRewardUpdated",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:79"
+          },
+          {
+            "label": "revenueRewardPeriodEndTime",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:83"
+          },
+          {
+            "label": "revenueRewardOdometer",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:86"
+          },
+          {
+            "label": "allRevenueRewardIn",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:89"
+          },
+          {
+            "label": "allRevenueRewardOut",
+            "offset": 0,
+            "slot": "13",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:92"
+          },
+          {
+            "label": "userRevenueRewardOdometer",
+            "offset": 0,
+            "slot": "14",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:95"
+          },
+          {
+            "label": "allUserRewards",
+            "offset": 0,
+            "slot": "15",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:98"
+          },
+          {
+            "label": "revenueRewardsToPayout",
+            "offset": 0,
+            "slot": "16",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:101"
+          },
+          {
+            "label": "tokenRewardBalance",
+            "offset": 0,
+            "slot": "17",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:106"
+          },
+          {
+            "label": "lastTimeTokenRewardUpdated",
+            "offset": 0,
+            "slot": "18",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:109"
+          },
+          {
+            "label": "tokenRewardOdometer",
+            "offset": 0,
+            "slot": "19",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:112"
+          },
+          {
+            "label": "allEarnedTokenReward",
+            "offset": 0,
+            "slot": "20",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:116"
+          },
+          {
+            "label": "allTokenRewardPaid",
+            "offset": 0,
+            "slot": "21",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:119"
+          },
+          {
+            "label": "tokenRewardPerSecond",
+            "offset": 0,
+            "slot": "22",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:122"
+          },
+          {
+            "label": "userTokenRewardOdometer",
+            "offset": 0,
+            "slot": "23",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:125"
+          },
+          {
+            "label": "tokenRewardsToPayout",
+            "offset": 0,
+            "slot": "24",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:128"
+          },
+          {
+            "label": "userStakingTimestamp",
+            "offset": 0,
+            "slot": "25",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:131"
+          },
+          {
+            "label": "readyToWithdraw",
+            "offset": 0,
+            "slot": "26",
+            "type": "t_mapping(t_address,t_struct(WithdrawalRequest)4557_storage)",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:134"
+          },
+          {
+            "label": "balances",
+            "offset": 0,
+            "slot": "27",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:137"
+          },
+          {
+            "label": "withdrawWaitTime",
+            "offset": 0,
+            "slot": "28",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:140"
+          },
+          {
+            "label": "penaltyFeesCollected",
+            "offset": 0,
+            "slot": "29",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:143"
+          },
+          {
+            "label": "penaltyDays",
+            "offset": 0,
+            "slot": "30",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:146"
+          },
+          {
+            "label": "BLOCK_TIME_LENGTH",
+            "offset": 0,
+            "slot": "31",
+            "type": "t_uint256",
+            "contract": "StakingRewards",
+            "src": "contracts/StakingRewards.sol:149"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)25_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlStorage)35_storage": {
+            "label": "struct AccessControlUpgradeable.AccessControlStorage",
+            "members": [
+              {
+                "label": "_roles",
+                "type": "t_mapping(t_bytes32,t_struct(RoleData)25_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(InitializableStorage)95_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(RoleData)25_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(IERC20)2468": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_struct(WithdrawalRequest)4557_storage)": {
+            "label": "mapping(address => struct StakingRewards.WithdrawalRequest)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(PendingRequest)4562_storage": {
+            "label": "struct StakingRewards.PendingRequest",
+            "members": [
+              {
+                "label": "timeToWait",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "newValue",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(WithdrawalRequest)4557_storage": {
+            "label": "struct StakingRewards.WithdrawalRequest",
+            "members": [
+              {
+                "label": "amount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "time",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)25_storage)",
+              "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
